@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-dark-50 text-gray-100 font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-dark-500 rounded;
+  }
+}
+
+@layer components {
+  /* Prose styles for blog content rendered via react-markdown */
+  .blog-prose {
+    @apply text-gray-300 leading-relaxed;
+  }
+  .blog-prose h1 {
+    @apply font-serif text-3xl text-white mt-8 mb-4 font-normal;
+  }
+  .blog-prose h2 {
+    @apply font-serif text-2xl text-white mt-8 mb-4 font-normal;
+  }
+  .blog-prose h3 {
+    @apply text-lg font-semibold text-white mt-6 mb-3;
+  }
+  .blog-prose p {
+    @apply mb-5 leading-relaxed;
+  }
+  .blog-prose a {
+    @apply text-purple-400 underline decoration-purple-500/30 hover:decoration-purple-400 transition-colors;
+  }
+  .blog-prose ul {
+    @apply list-disc list-inside mb-5 space-y-1;
+  }
+  .blog-prose ol {
+    @apply list-decimal list-inside mb-5 space-y-1;
+  }
+  .blog-prose blockquote {
+    @apply border-l-4 border-purple-500 pl-5 py-1 my-5 bg-dark-200 rounded-r-lg italic text-gray-400;
+  }
+  .blog-prose code {
+    @apply bg-dark-200 text-purple-400 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  .blog-prose pre {
+    @apply bg-dark-200 border border-dark-400 rounded-xl p-5 overflow-x-auto mb-5;
+  }
+  .blog-prose pre code {
+    @apply bg-transparent p-0 text-gray-300;
+  }
+  .blog-prose strong {
+    @apply text-white font-semibold;
+  }
+  .blog-prose hr {
+    @apply border-dark-400 my-8;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-1 hover:border-dark-500;
+  }
+}

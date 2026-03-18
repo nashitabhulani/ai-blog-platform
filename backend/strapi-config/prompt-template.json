@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "prompt_templates",
+  "info": {
+    "singularName": "prompt-template",
+    "pluralName": "prompt-templates",
+    "displayName": "PromptTemplate",
+    "description": "Editable AI prompt templates — change AI behavior without code"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "prompt": {
+      "type": "text",
+      "required": true
+    },
+    "step": {
+      "type": "enumeration",
+      "enum": [
+        "keyword_research",
+        "outline",
+        "section_writing",
+        "internal_linking",
+        "seo_metadata",
+        "image_prompt",
+        "social_content"
+      ]
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
