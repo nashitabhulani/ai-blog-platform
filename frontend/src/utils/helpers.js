@@ -1,3 +1,20 @@
+// ─── Strapi Field Access ───────────────────────────────────────────────────────
+// Works with both Strapi v4 (post.attributes.x) and v5 (post.x)
+// Also handles lowercase fallbacks for fields like postStatus/poststatus
+export function getAttr(obj, key) {
+  if (!obj) return undefined
+  const attrs = obj.attributes || obj
+  const val = attrs[key]
+  if (val !== undefined) return val
+  // Fallback to lowercase if key is mixed case
+  const lowerKey = key.toLowerCase()
+  if (lowerKey !== key) {
+    const lowerVal = attrs[lowerKey]
+    if (lowerVal !== undefined) return lowerVal
+  }
+  return undefined
+}
+
 // ─── Reading Time ─────────────────────────────────────────────────────────────
 export function calculateReadingTime(text = '') {
   const wordsPerMinute = 200

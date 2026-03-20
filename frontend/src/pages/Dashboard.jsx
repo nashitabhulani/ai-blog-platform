@@ -1,28 +1,31 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePosts } from '../hooks/usePosts'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
 import PostsTable from '../components/PostsTable'
-import StatusBadge from '../components/StatusBadge'
+import WordPressDashboard from '../components/WordPressDashboard'
+import { getAttr } from '../utils/helpers'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('overview')
   const { posts, loading, handlePublish, handleDelete } = usePosts('all')
 
-  const published = posts.filter((p) => (p.attributes?.status || p.status) === 'published')
-  const drafts = posts.filter((p) => (p.attributes?.status || p.status) === 'draft')
+  const published = posts.filter((p) => getAttr(p, 'postStatus') === 'published')
+  const drafts    = posts.filter((p) => getAttr(p, 'postStatus') === 'draft')
   const aiGenerated = posts.filter((p) => p.attributes?.aiGenerated || p.aiGenerated)
   const totalViews = posts.reduce((sum, p) => sum + (p.attributes?.views || p.views || 0), 0)
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
       <PageHeader
-        title="Good morning ✦"
-        subtitle="Your AI blog platform is ready. Generate, publish, grow."
+        title="Dashboard ✦"
+        subtitle="Manage your AI-powered content ecosystem."
         action={
           <button
             onClick={() => navigate('/ai-generator')}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-xl transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-purple-500/20 uppercase tracking-widest"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
               <path d="M8 1L10.2 5.8L15 7L11.5 10.5L12.4 15L8 12.5L3.6 15L4.5 10.5L1 7L5.8 5.8L8 1Z" fill="white" />
@@ -32,87 +35,91 @@ export default function Dashboard() {
         }
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard value={published.length} label="Published Posts" change="Live & indexed" />
-        <StatCard value={drafts.length} label="Draft Posts" change={`${aiGenerated.length} AI-generated`} changePositive={false} />
-        <StatCard
-          value={totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews}
-          label="Total Views"
-          change="18% this month"
-        />
-        <StatCard value={`${aiGenerated.length}`} label="AI Posts Created" change="Avg 4.2min each" />
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid md:grid-cols-3 gap-3 mb-6">
-        <button
-          onClick={() => navigate('/ai-generator')}
-          className="p-4 bg-purple-600/10 border border-purple-500/25 rounded-xl text-left hover:bg-purple-600/15 transition-colors group"
+      {/* Tabs */}
+      <div className="flex items-center gap-1 p-1 bg-dark-100/50 border border-dark-400 rounded-xl w-fit">
+        <button 
+          onClick={() => setActiveTab('overview')}
+          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'overview' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
         >
-          <div className="text-lg mb-1">✦</div>
-          <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors">Generate New Post</p>
-          <p className="text-xs text-gray-500 mt-0.5">Full AI pipeline — keywords to publish</p>
+          Overview
         </button>
-        <button
-          onClick={() => navigate('/published')}
-          className="p-4 bg-dark-100 border border-dark-400 rounded-xl text-left hover:border-dark-500 transition-colors group"
+        <button 
+          onClick={() => setActiveTab('wordpress')}
+          className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'wordpress' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
         >
-          <div className="text-lg mb-1">📄</div>
-          <p className="text-sm font-medium text-white">View Published</p>
-          <p className="text-xs text-gray-500 mt-0.5">{published.length} live posts</p>
-        </button>
-        <a
-          href="/blog"
-          target="_blank"
-          className="p-4 bg-dark-100 border border-dark-400 rounded-xl text-left hover:border-dark-500 transition-colors group block"
-        >
-          <div className="text-lg mb-1">🌐</div>
-          <p className="text-sm font-medium text-white">Open Blog →</p>
-          <p className="text-xs text-gray-500 mt-0.5">View public-facing site</p>
-        </a>
-      </div>
-
-      {/* Recent posts */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white">Recent Posts</h2>
-        <button onClick={() => navigate('/drafts')} className="text-xs text-purple-400 hover:text-purple-300">
-          View all →
+          WordPress Hub
         </button>
       </div>
 
-      {loading ? (
-        <div className="bg-dark-100 border border-dark-400 rounded-xl p-8 text-center text-gray-500 text-sm">
-          Loading posts...
-        </div>
-      ) : (
-        <PostsTable
-          posts={posts.slice(0, 6)}
-          onPublish={handlePublish}
-          onDelete={handleDelete}
-        />
-      )}
+      {activeTab === 'overview' ? (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={published.length} label="Live Blog" change="Active Posts" />
+            <StatCard value={drafts.length} label="AI Drafts" change="Ready to Edit" changePositive={false} />
+            <StatCard
+              value={totalViews > 1000 ? `${(totalViews / 1000).toFixed(1)}k` : totalViews}
+              label="Total Views"
+              change="Platform Impact"
+            />
+            <StatCard value={`${aiGenerated.length}`} label="AI Generated" change="Total Creations" />
+          </div>
 
-      {/* API status */}
-      <div className="mt-6 p-4 bg-dark-100 border border-dark-400 rounded-xl">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">System Status</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Strapi API', ok: true },
-            { label: 'OpenAI API', ok: !!import.meta.env.VITE_OPENAI_API_KEY },
-            { label: 'Image Gen', ok: !!import.meta.env.VITE_OPENAI_API_KEY },
-            { label: 'Media Upload', ok: true },
-          ].map(({ label, ok }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span className={`w-2 h-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              <span className="text-gray-400">{label}</span>
-              <span className={`ml-auto font-mono ${ok ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {ok ? 'OK' : 'No key'}
-              </span>
+          {/* Quick actions */}
+          <div className="grid md:grid-cols-3 gap-4">
+            <button
+              onClick={() => navigate('/ai-generator')}
+              className="p-5 bg-purple-600/5 border border-purple-500/10 rounded-2xl text-left hover:bg-purple-600/10 transition-all group"
+            >
+              <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">✦</div>
+              <p className="text-sm font-semibold text-white">Generate Blog</p>
+              <p className="text-xs text-gray-500 mt-1">Full AI pipeline — keywords to publish</p>
+            </button>
+            <button
+              onClick={() => navigate('/published')}
+              className="p-5 bg-dark-100 border border-dark-400 rounded-2xl text-left hover:border-dark-500 transition-all group"
+            >
+               <div className="w-10 h-10 bg-dark-200 rounded-xl flex items-center justify-center text-gray-400 mb-4 group-hover:scale-110 transition-transform">📄</div>
+              <p className="text-sm font-semibold text-white">Content Library</p>
+              <p className="text-xs text-gray-500 mt-1">{posts.length} entries managed</p>
+            </button>
+            <a
+              href="/blog"
+              target="_blank"
+              className="p-5 bg-dark-100 border border-dark-400 rounded-2xl text-left hover:border-dark-500 transition-all group block"
+            >
+              <div className="w-10 h-10 bg-dark-200 rounded-xl flex items-center justify-center text-gray-400 mb-4 group-hover:scale-110 transition-transform">🌐</div>
+              <p className="text-sm font-semibold text-white">Live Portal</p>
+              <p className="text-xs text-gray-500 mt-1">Visit your public blog front</p>
+            </a>
+          </div>
+
+          {/* Recent posts */}
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white uppercase tracking-widest bg-purple-600/10 px-3 py-1 rounded-md border border-purple-600/20">Recently Created</h2>
+              <button onClick={() => navigate('/drafts')} className="text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors">
+                View all content →
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+
+            {loading ? (
+              <div className="h-64 flex flex-col items-center justify-center gap-3 bg-dark-100/30 border border-dark-400 rounded-2xl border-dashed">
+                <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs text-gray-500">Syncing database...</p>
+              </div>
+            ) : (
+              <PostsTable
+                posts={posts.slice(0, 8)}
+                onPublish={handlePublish}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <WordPressDashboard posts={posts} />
+      )}
     </div>
   )
 }

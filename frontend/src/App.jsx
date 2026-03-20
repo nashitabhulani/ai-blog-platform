@@ -8,6 +8,7 @@ import AIGenerator from './pages/AIGenerator'
 import DraftPosts from './pages/DraftPosts'
 import PublishedPosts from './pages/PublishedPosts'
 import Categories from './pages/Categories'
+import BulkGenerator from './pages/BulkGenerator'
 
 // Blog pages
 import BlogHome from './pages/BlogHome'
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="drafts" element={<DraftPosts />} />
           <Route path="published" element={<PublishedPosts />} />
           <Route path="categories" element={<Categories />} />
+          <Route path="bulk-factory" element={<BulkGenerator />} />
         </Route>
 
         {/* Public Blog */}

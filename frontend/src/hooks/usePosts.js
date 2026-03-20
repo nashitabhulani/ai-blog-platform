@@ -1,39 +1,29 @@
-import { useState, useEffect } from 'react'
-import { getPosts, getPublishedPosts, getDraftPosts, publishPost, deletePost } from '../services/strapiService'
+// usePosts.js — fixed to populate featuredImageUrl and handle both content types
+import { useState, useEffect, useCallback } from 'react'
+import { getPosts, getPublishedPosts, getDraftPosts, deletePost } from '../services/strapiService'
 
 export function usePosts(filter = 'all') {
-  const [posts, setPosts] = useState([])
+  const [posts, setPosts]     = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError]     = useState(null)
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       let data
-      if (filter === 'published') data = await getPublishedPosts()
+      if (filter === 'published')  data = await getPublishedPosts()
       else if (filter === 'draft') data = await getDraftPosts()
-      else data = await getPosts()
+      else                         data = await getPosts()
       setPosts(data.data || [])
     } catch (err) {
       setError(err.message || 'Failed to load posts')
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchPosts()
   }, [filter])
 
-  const handlePublish = async (id) => {
-    try {
-      await publishPost(id)
-      await fetchPosts()
-    } catch (err) {
-      setError(err.message)
-    }
-  }
+  useEffect(() => { fetchPosts() }, [fetchPosts])
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this post?')) return
@@ -45,5 +35,5 @@ export function usePosts(filter = 'all') {
     }
   }
 
-  return { posts, loading, error, refetch: fetchPosts, handlePublish, handleDelete }
+  return { posts, loading, error, refetch: fetchPosts, handleDelete }
 }

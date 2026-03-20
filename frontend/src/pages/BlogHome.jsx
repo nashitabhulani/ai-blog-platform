@@ -4,15 +4,17 @@ import { useNavigate } from 'react-router-dom'
 import { getPublishedPosts, getCategories } from '../services/strapiService'
 import FeaturedPost from '../components/FeaturedPost'
 import BlogCard from '../components/BlogCard'
+import { getAttr } from '../utils/helpers'
 
 export default function BlogHome() {
   const navigate = useNavigate()
-  const [posts, setPosts] = useState([])
+  const [posts, setPosts]           = useState([])
   const [categories, setCategories] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [email, setEmail]           = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -23,27 +25,43 @@ export default function BlogHome() {
         setPosts(postData.data || [])
         setCategories(catData.data || [])
       })
-      .catch(() => {
-        // Strapi offline — show empty states
-      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const filteredPosts = posts.filter((p) => {
-    const attrs = p.attributes || p
+    // Search query filter
     const q = searchQuery.toLowerCase()
-    return (
-      !searchQuery ||
-      attrs.title?.toLowerCase().includes(q) ||
-      attrs.excerpt?.toLowerCase().includes(q)
-    )
+    const title   = getAttr(p, 'title')   || ''
+    const excerpt = getAttr(p, 'excerpt') || ''
+    const matchesSearch = !q || title.toLowerCase().includes(q) || excerpt.toLowerCase().includes(q)
+    
+    // Category filter
+    const category = getAttr(p, 'category')
+    const catName = getAttr(category, 'name') || category?.name || ''
+    const matchesCategory = !selectedCategory || catName === selectedCategory
+
+    return matchesSearch && matchesCategory
   })
 
   const featured = filteredPosts[0]
-  const trending = filteredPosts.slice(1, 4)
-  const latest = filteredPosts.slice(1)
+  const trending  = filteredPosts.slice(1, 4)
+  const latest    = filteredPosts.slice(1)
 
-  const CATEGORY_ICONS = { 'AI & Technology': '🤖', Development: '⚡', Science: '🔬', Business: '💼', Healthcare: '🧬', Design: '🎨' }
+  const CATEGORY_ICONS = {
+    'AI & Technology': '🤖',
+    Development: '⚡',
+    Science: '🔬',
+    Business: '💼',
+    Healthcare: '🧬',
+    Design: '🎨',
+  }
+
+  const handlePostClick = (post) => {
+    // ── SLUG FIX: read from v4 (.attributes.slug) or v5 (.slug) ──────────────
+    const slug = getAttr(post, 'slug')
+    if (slug) navigate(`/blog/${slug}`)
+  }
 
   return (
     <>
@@ -94,27 +112,32 @@ export default function BlogHome() {
               </div>
               <div className="space-y-2.5">
                 {trending.map((post, i) => {
-                  const attrs = post.attributes || post
+                  // ── SLUG FIX ──────────────────────────────────────────────
+                  const title       = getAttr(post, 'title')       || 'Untitled'
+                  const readingTime = getAttr(post, 'readingTime') || 5
+                  const views       = getAttr(post, 'views')        || 0
+                  const slug        = getAttr(post, 'slug')         || ''
+
                   return (
                     <div
                       key={post.id}
-                      onClick={() => navigate(`/blog/${attrs.slug}`)}
-                      className="flex items-center gap-4 p-3.5 bg-dark-100 border border-dark-400 hover:border-dark-500 rounded-xl cursor-pointer transition-all group"
+                      onClick={() => slug && navigate(`/blog/${slug}`)}
+                      className={`flex items-center gap-4 p-3.5 bg-dark-100 border border-dark-400 hover:border-dark-500 rounded-xl transition-all group ${slug ? 'cursor-pointer' : 'cursor-default opacity-60'}`}
                     >
                       <span className="font-mono text-xl text-dark-500 min-w-[28px]">
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors truncate">
-                          {attrs.title}
+                          {title}
                         </p>
                         <p className="text-xs text-gray-600 mt-0.5">
-                          {attrs.readingTime ? `${attrs.readingTime} min read` : ''}
+                          {readingTime} min read
                         </p>
                       </div>
-                      {attrs.views && (
+                      {views > 0 && (
                         <span className="text-xs font-mono text-gray-600">
-                          {attrs.views.toLocaleString()} views
+                          {views.toLocaleString()} views
                         </span>
                       )}
                     </div>
@@ -140,18 +163,37 @@ export default function BlogHome() {
 
           {/* Categories */}
           <section id="categories" className="mb-8">
-            <h2 className="text-sm font-semibold text-white mb-4">Browse Categories</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-white">Browse Categories</h2>
+              {selectedCategory && (
+                <button 
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-xs text-purple-400 hover:underline"
+                >
+                  Clear filter (Current: {selectedCategory})
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {(categories.length > 0
-                ? categories.map((c) => ({ name: c.attributes?.name || c.name, slug: c.attributes?.slug || c.slug }))
-                : Object.keys(CATEGORY_ICONS).map((name) => ({ name, slug: name.toLowerCase().replace(/\W+/g, '-') }))
-              ).map(({ name, slug }) => (
+                ? categories.map((c) => ({
+                    name: getAttr(c, 'name') || '',
+                    slug: getAttr(c, 'slug') || '',
+                  }))
+                : Object.keys(CATEGORY_ICONS).map((name) => ({
+                    name,
+                    slug: name.toLowerCase().replace(/\W+/g, '-'),
+                  }))
+              ).map(({ name }) => (
                 <div
                   key={name}
-                  className="bg-dark-100 border border-dark-400 hover:border-dark-500 rounded-xl p-4 text-center cursor-pointer transition-all hover:-translate-y-0.5"
+                  onClick={() => setSelectedCategory(name === selectedCategory ? null : name)}
+                  className={`bg-dark-100 border rounded-xl p-4 text-center cursor-pointer transition-all hover:-translate-y-0.5 ${
+                    selectedCategory === name ? 'border-purple-500 bg-purple-500/5 shadow-lg shadow-purple-500/10' : 'border-dark-400 hover:border-dark-500'
+                  }`}
                 >
                   <div className="text-2xl mb-2">{CATEGORY_ICONS[name] || '📂'}</div>
-                  <p className="text-sm font-medium text-white">{name}</p>
+                  <p className={`text-sm font-medium ${selectedCategory === name ? 'text-purple-300' : 'text-white'}`}>{name}</p>
                 </div>
               ))}
             </div>

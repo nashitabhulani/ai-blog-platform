@@ -6,6 +6,7 @@ const navItems = [
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: GridIcon },
       { to: '/ai-generator', label: 'AI Generator', icon: SparkIcon },
+      { to: '/bulk-factory', label: 'Bulk Factory', icon: SparkIcon },
     ],
   },
   {

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import StatusBadge from './StatusBadge'
-import { formatDate } from '../utils/helpers'
+import { formatDate, getAttr } from '../utils/helpers'
 
 export default function PostsTable({ posts = [], onPublish, onDelete, showActions = true }) {
   const navigate = useNavigate()
@@ -26,41 +26,48 @@ export default function PostsTable({ posts = [], onPublish, onDelete, showAction
 
       {/* Rows */}
       {posts.map((post) => {
-        const attrs = post.attributes || post
         const id = post.id
-        const category = attrs.category?.data?.attributes || attrs.category
+        const title       = getAttr(post, 'title')
+        const slug        = getAttr(post, 'slug')
+        const aiGen       = getAttr(post, 'aiGenerated')
+        const readTime    = getAttr(post, 'readingTime')
+        const category    = getAttr(post, 'category')
+        const catName     = getAttr(category, 'name') || (category?.name ?? '—')
+        const status      = getAttr(post, 'postStatus') || 'draft'
+        const views       = getAttr(post, 'views')
+        const createdAt   = getAttr(post, 'publishedAt') || getAttr(post, 'createdAt')
 
         return (
           <div
             key={id}
             className="grid grid-cols-[1fr_120px_110px_80px_90px] gap-2 px-4 py-3.5 border-b border-dark-400 last:border-b-0 items-center hover:bg-dark-200/50 transition-colors cursor-pointer group"
-            onClick={() => navigate(`/blog/${attrs.slug}`)}
+            onClick={() => navigate(`/blog/${slug}`)}
           >
             <div>
               <p className="text-sm font-medium text-white group-hover:text-purple-300 transition-colors line-clamp-1">
-                {attrs.title}
+                {title}
               </p>
               <p className="text-[11px] text-gray-600 mt-0.5">
-                {attrs.aiGenerated && '✦ AI Generated · '}
-                {attrs.readingTime ? `${attrs.readingTime} min read` : ''}
+                {aiGen && '✦ AI Generated · '}
+                {readTime ? `${readTime} min read` : ''}
               </p>
             </div>
 
             <div className="text-xs text-gray-400">
-              {category?.name || '—'}
+              {catName}
             </div>
 
             <div>
-              <StatusBadge status={attrs.status || 'draft'} />
+              <StatusBadge status={status} />
             </div>
 
             <div className="text-xs font-mono text-gray-400">
-              {attrs.views ? attrs.views.toLocaleString() : '—'}
+              {views ? views.toLocaleString() : '—'}
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-gray-600">
-                {formatDate(attrs.publishedAt || attrs.createdAt)}
+                {formatDate(createdAt)}
               </span>
 
               {showActions && (
@@ -68,7 +75,7 @@ export default function PostsTable({ posts = [], onPublish, onDelete, showAction
                   className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {attrs.status === 'draft' && onPublish && (
+                  {status === 'draft' && onPublish && (
                     <button
                       onClick={() => onPublish(id)}
                       className="text-[10px] px-2 py-0.5 rounded bg-emerald-400/10 text-emerald-400 border border-emerald-400/25 hover:bg-emerald-400/20 transition-colors font-mono"

@@ -72,6 +72,18 @@
     },
     "views": {
       "type": "integer"
+    },
+    "featuredImageUrl": {
+      "type": "string"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "posts"
+    },
+    "wpLog": {
+      "type": "json"
     }
   }
 }
