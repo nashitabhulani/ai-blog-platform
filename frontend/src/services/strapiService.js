@@ -8,9 +8,20 @@ const api = axios.create({
   baseURL: `${STRAPI_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
-    ...(STRAPI_TOKEN && { Authorization: `Bearer ${STRAPI_TOKEN}` }),
   },
 })
+
+// Request interceptor to add token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token') || STRAPI_TOKEN
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (err) => Promise.reject(err)
+)
 
 api.interceptors.response.use(
   (res) => res,

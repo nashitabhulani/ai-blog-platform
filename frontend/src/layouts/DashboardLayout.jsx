@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
+import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   {
@@ -27,6 +28,7 @@ const navItems = [
 ]
 
 export default function DashboardLayout() {
+  const { logout } = useAuth()
   return (
     <div className="flex h-screen bg-dark-50 overflow-hidden">
       {/* Sidebar */}
@@ -74,13 +76,18 @@ export default function DashboardLayout() {
         {/* User & Theme Toggle */}
         <div className="p-2 border-t border-dark-400 space-y-2">
           <ThemeToggle />
-          <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-dark-200 cursor-pointer hover:bg-dark-300 transition-colors">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-dark-200 group relative">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-semibold text-white shrink-0">
               AC
             </div>
-            <div>
-              <p className="text-xs font-medium text-white">Alex Chen</p>
-              <p className="text-[10px] text-purple-400">✦ Pro Plan</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">Alex Chen</p>
+              <button 
+                onClick={logout}
+                className="text-[9px] text-red-400 hover:text-red-300 font-bold uppercase tracking-tighter transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>

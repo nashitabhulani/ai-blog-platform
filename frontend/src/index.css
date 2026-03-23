@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --color-bg-50: #f8f9fa;
+    --color-bg-50: #f1f3f7;
     --color-bg-100: #ffffff;
-    --color-bg-200: #f1f3f5;
-    --color-bg-300: #e9ecef;
-    --color-bg-400: #dee2e6;
-    --color-bg-500: #ced4da;
+    --color-bg-200: #e5e9f0;
+    --color-bg-300: #d8dee9;
+    --color-bg-400: #cbd2e1;
+    --color-bg-500: #9ba7bd;
     
     --tw-white: #0f172a;
-    --tw-gray-100: #1e293b;
-    --tw-gray-200: #334155;
-    --tw-gray-300: #475569;
-    --tw-gray-400: #64748b;
-    --tw-gray-600: #94a3b8;
+    --tw-gray-100: #0f172a;
+    --tw-gray-200: #1e293b;
+    --tw-gray-300: #334155;
+    --tw-gray-400: #475569;
+    --tw-gray-600: #64748b;
     
     --color-text-primary: #0f172a;
-    --color-text-secondary: #475569;
-    --color-border: #e2e8f0;
+    --color-text-secondary: #334155;
+    --color-border: #cbd5e1;
   }
 
   .dark {
