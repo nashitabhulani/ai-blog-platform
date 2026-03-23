@@ -25,6 +25,24 @@ export function usePosts(filter = 'all') {
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
+  const handlePublish = async (id) => {
+    try {
+      await (await import('../services/strapiService')).publishPost(id)
+      await fetchPosts()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleUnpublish = async (id) => {
+    try {
+      await (await import('../services/strapiService')).unpublishPost(id)
+      await fetchPosts()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this post?')) return
     try {
@@ -35,5 +53,5 @@ export function usePosts(filter = 'all') {
     }
   }
 
-  return { posts, loading, error, refetch: fetchPosts, handleDelete }
+  return { posts, loading, error, refetch: fetchPosts, handlePublish, handleUnpublish, handleDelete }
 }

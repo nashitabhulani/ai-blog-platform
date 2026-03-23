@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function BlogLayout() {
   const navigate = useNavigate()
@@ -27,15 +28,18 @@ export default function BlogLayout() {
             </a>
           </nav>
 
-          <button
-            onClick={() => navigate('/ai-generator')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1L10.2 5.8L15 7L11.5 10.5L12.4 15L8 12.5L3.6 15L4.5 10.5L1 7L5.8 5.8L8 1Z" fill="white" />
-            </svg>
-            AI Generator
-          </button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button
+              onClick={() => navigate('/ai-generator')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1L10.2 5.8L15 7L11.5 10.5L12.4 15L8 12.5L3.6 15L4.5 10.5L1 7L5.8 5.8L8 1Z" fill="white" />
+              </svg>
+              AI Generator
+            </button>
+          </div>
         </div>
       </header>
 

@@ -10,7 +10,7 @@ import { getAttr } from '../utils/helpers'
 export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
-  const { posts, loading, handlePublish, handleDelete } = usePosts('all')
+  const { posts, loading, handlePublish, handleUnpublish, handleDelete } = usePosts('all')
 
   const published = posts.filter((p) => getAttr(p, 'postStatus') === 'published')
   const drafts    = posts.filter((p) => getAttr(p, 'postStatus') === 'draft')
@@ -112,6 +112,7 @@ export default function Dashboard() {
               <PostsTable
                 posts={posts.slice(0, 8)}
                 onPublish={handlePublish}
+                onUnpublish={handleUnpublish}
                 onDelete={handleDelete}
               />
             )}

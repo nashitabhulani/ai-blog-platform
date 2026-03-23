@@ -16,14 +16,71 @@ export default function BulkGenerator() {
   const [completed, setCompleted] = useState(0)
   const [batchLogs, setBatchLogs] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
+  const [selectedTopics, setSelectedTopics] = useState([])
 
   const fetchTopics = async () => {
     setIsDiscovering(true)
     try {
       const res = await generateDiscoveryTopics(niche, count)
       setTopics(res)
+      setSelectedTopics(res) // Select all by default
     } finally {
       setIsDiscovering(false)
+    }
+  }
+
+  const processTopic = async (topic) => {
+    setCurrentTopic(topic)
+    try {
+      addLog(`🚀 Starting Factory Pipeline: "${topic}"...`)
+      
+      // Step 1: Run Content and Image Prompts in parallel
+      const [postObj, imgPrompt1, imgPrompt2] = await Promise.all([
+        generateFullPostFast(topic, niche),
+        generateImagePrompt(topic, niche, 'Cinematic'),
+        generateImagePrompt(topic, niche, 'Abstract 3D Render')
+      ])
+
+      addLog(`🖼 Generating Dual Visuals for: "${topic}"...`)
+      
+      // Step 2: Generate both images in parallel
+      const [geminiImage1, geminiImage2] = await Promise.all([
+        generateImage(imgPrompt1, 1),
+        generateImage(imgPrompt2, 1)
+      ])
+
+      addLog(`💾 Finalizing & Uploading: "${topic}"...`)
+
+      // Step 3: Handle image injection and saving
+      let injectedContent = postObj.content || ''
+      if (geminiImage2?.base64) {
+        try {
+          const uploadRes = await uploadBase64File(geminiImage2.base64, geminiImage2.mimeType, `${topic.slice(0, 10)}-mid.png`)
+          const midImageUrl = getStrapiImageUrl(uploadRes?.[0])
+          const sections = injectedContent.split('\n\n')
+          const midPoint = Math.floor(sections.length / 2)
+          sections.splice(midPoint, 0, `\n![${topic}](${midImageUrl})\n`)
+          injectedContent = sections.join('\n\n')
+        } catch (e) { console.error("Mid-image insert failed", e) }
+      }
+
+      const postData = {
+        ...postObj,
+        content: injectedContent,
+        featuredImage: geminiImage1,
+        category: niche,
+        aiGenerated: true
+      }
+
+      const saved = await saveAIPostAsDraft(postData)
+      const data = saved.data?.data || saved.data || saved
+      const slug = data.attributes?.slug || data.slug || (topic.toLowerCase().replace(/ /g, '-'))
+
+      setRecentPosts(prev => [{ title: topic, slug, time: new Date() }, ...prev])
+      setCompleted(prev => prev + 1)
+      addLog(`✅ Manufactured: "${topic}"`)
+    } catch (err) {
+      addLog(`❌ High-Speed Failure: "${topic}" - ${err.message}`)
     }
   }
 
@@ -32,56 +89,22 @@ export default function BulkGenerator() {
     setCompleted(0)
     setBatchLogs([])
 
-    for (let i = 0; i < topics.length; i++) {
-        const topic = topics[i]
-        setCurrentTopic(topic)
-        
-        try {
-            addLog(`🚀 [1/3] Writing Content: "${topic}"...`)
-            const postObj = await generateFullPostFast(topic, niche)
-            
-            addLog(`🖼 [2/3] Gemini Imagen 3 Generation (Dual Images)...`)
-            const imgPrompt1 = await generateImagePrompt(topic, niche, 'Cinematic')
-            const imgPrompt2 = await generateImagePrompt(topic, niche, 'Abstract 3D Render') // Different style for variety
-            
-            const geminiImage1 = await generateImage(imgPrompt1, 1)
-            const geminiImage2 = await generateImage(imgPrompt2, 1)
-            
-            addLog(`💾 [3/3] Uploading & Injecting Visuals...`)
-            
-            // Upload the second image first to get its URL for injection
-            let injectedContent = postObj.content || ''
-            if (geminiImage2?.base64) {
-               try {
-                  const uploadRes = await uploadBase64File(geminiImage2.base64, geminiImage2.mimeType, `${topic.slice(0,10)}-mid.png`)
-                  const midImageUrl = getStrapiImageUrl(uploadRes?.[0])
-                  
-                  // Inject into middle of content
-                  const sections = injectedContent.split('\n\n')
-                  const midPoint = Math.floor(sections.length / 2)
-                  sections.splice(midPoint, 0, `\n![${topic}](${midImageUrl})\n`)
-                  injectedContent = sections.join('\n\n')
-               } catch (e) { console.error("Mid-image insert failed", e) }
-            }
-
-            const postData = {
-                ...postObj,
-                content: injectedContent,
-                featuredImage: geminiImage1, 
-                category: niche,
-                aiGenerated: true
-            }
-            
-            const saved = await saveAIPostAsDraft(postData)
-            const slug = saved.data?.data?.attributes?.slug || saved.data?.attributes?.slug || saved.data?.slug || (topic.toLowerCase().replace(/ /g, '-'))
-            
-            setRecentPosts(prev => [{ title: topic, slug, time: new Date() }, ...prev])
-            setCompleted(prev => prev + 1)
-            addLog(`✅ Successfully Manufactured: "${topic}"`)
-        } catch (err) {
-            addLog(`❌ High-Speed Failure: "${topic}" - ${err.message}`)
-        }
+    const topicsToProcess = topics.filter(t => selectedTopics.includes(t))
+    if (topicsToProcess.length === 0) {
+      addLog('⚠️ No topics selected for generation.')
+      setIsGenerating(false)
+      return
     }
+
+    addLog(`🚀 Starting bulk generation for ${topicsToProcess.length} topics...`)
+
+    // Batch size of 3 topics at a time to stay within Gemini rate limits but be much faster
+    const BATCH_SIZE = 3
+    for (let i = 0; i < topicsToProcess.length; i += BATCH_SIZE) {
+      const batch = topicsToProcess.slice(i, i + BATCH_SIZE)
+      await Promise.all(batch.map(topic => processTopic(topic)))
+    }
+
     setIsGenerating(false)
     setCurrentTopic('')
   }
@@ -168,12 +191,21 @@ export default function BulkGenerator() {
                     <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-medium">Model: {import.meta.env.VITE_IMAGE_MODEL || 'Gemini 3 Pro Vision'}</p>
                 </div>
                 {topics.length > 0 && !isGenerating && (
+                  <div className="flex gap-2">
+                    <button 
+                        onClick={() => setSelectedTopics(selectedTopics.length === topics.length ? [] : [...topics])}
+                        className="px-3 py-1.5 bg-dark-400/50 hover:bg-dark-400 text-gray-400 hover:text-white text-[10px] font-bold rounded-lg transition-all uppercase tracking-wider"
+                    >
+                        {selectedTopics.length === topics.length ? 'Deselect All' : 'Select All'}
+                    </button>
                     <button 
                         onClick={runBulkProcess}
-                        className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 hover:scale-105 text-white text-[10px] font-black rounded-xl shadow-xl shadow-emerald-500/20 transition-all uppercase tracking-[0.1em]"
+                        disabled={selectedTopics.length === 0}
+                        className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 hover:scale-105 text-white text-[10px] font-black rounded-xl shadow-xl shadow-emerald-500/20 transition-all uppercase tracking-[0.1em] disabled:opacity-50 disabled:hover:scale-100"
                     >
-                        🚀 Initiate Creation
+                        🚀 Initiate {selectedTopics.length} Creations
                     </button>
+                  </div>
                 )}
               </div>
 
@@ -184,7 +216,17 @@ export default function BulkGenerator() {
                     </div>
                 ) : (
                     topics.map((t, idx) => (
-                        <div key={idx} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${currentTopic === t ? 'bg-purple-600/10 border-purple-500/40 shadow-lg shadow-purple-500/5' : 'bg-dark-200/40 border-dark-400'}`}>
+                        <div 
+                          key={idx} 
+                          onClick={() => {
+                            if (isGenerating) return
+                            setSelectedTopics(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+                          }}
+                          className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${currentTopic === t ? 'bg-purple-600/10 border-purple-500/40 shadow-lg shadow-purple-500/5' : 'bg-dark-200/40 border-dark-400 hover:border-dark-500'}`}
+                        >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTopics.includes(t) ? 'bg-purple-500 border-purple-500' : 'border-dark-500 bg-dark-300'}`}>
+                                {selectedTopics.includes(t) && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>}
+                            </div>
                             <span className="text-[10px] font-mono text-gray-600">#{idx + 1}</span>
                             <span className="text-xs text-gray-200 font-semibold truncate flex-1">{t}</span>
                             {currentTopic === t && <div className="flex gap-1.5"><span className="w-1 h-1 bg-purple-500 rounded-full animate-bounce" /><span className="w-1 h-1 bg-purple-500 rounded-full animate-bounce [animation-delay:0.2s]" /><span className="w-1 h-1 bg-purple-500 rounded-full animate-bounce [animation-delay:0.4s]" /></div>}

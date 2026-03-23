@@ -11,18 +11,26 @@ export default {
       },
       colors: {
         dark: {
-          50: '#0a0a0f',
-          100: '#111118',
-          200: '#1a1a24',
-          300: '#22222e',
-          400: '#2a2a38',
-          500: '#3a3a4e',
+          50: 'var(--color-bg-50)',
+          100: 'var(--color-bg-100)',
+          200: 'var(--color-bg-200)',
+          300: 'var(--color-bg-300)',
+          400: 'var(--color-bg-400)',
+          500: 'var(--color-bg-500)',
         },
         purple: {
           400: '#9d8fff',
           500: '#7c6fff',
           600: '#5b4fcc',
         },
+        white: 'var(--tw-white)',
+        gray: {
+          100: 'var(--tw-gray-100)',
+          200: 'var(--tw-gray-200)',
+          300: 'var(--tw-gray-300)',
+          400: 'var(--tw-gray-400)',
+          600: 'var(--tw-gray-600)',
+        }
       },
       animation: {
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',

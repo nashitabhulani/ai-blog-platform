@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import ThemeToggle from '../components/ThemeToggle'
 
 const navItems = [
   {
@@ -70,8 +71,9 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        {/* User */}
-        <div className="p-2 border-t border-dark-400">
+        {/* User & Theme Toggle */}
+        <div className="p-2 border-t border-dark-400 space-y-2">
+          <ThemeToggle />
           <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-dark-200 cursor-pointer hover:bg-dark-300 transition-colors">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-semibold text-white shrink-0">
               AC

@@ -33,7 +33,12 @@ export default function DraftPosts() {
           Loading drafts...
         </div>
       ) : (
-        <PostsTable posts={posts} onPublish={handlePublish} onDelete={handleDelete} />
+        <PostsTable 
+          posts={posts} 
+          onPublish={handlePublish} 
+          onDelete={handleDelete} 
+          showActions={true} 
+        />
       )}
     </div>
   )

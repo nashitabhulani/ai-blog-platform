@@ -3,7 +3,7 @@ import PageHeader from '../components/PageHeader'
 import PostsTable from '../components/PostsTable'
 
 export default function PublishedPosts() {
-  const { posts, loading, error, handleDelete } = usePosts('published')
+  const { posts, loading, error, handleUnpublish, handleDelete } = usePosts('published')
 
   const totalViews = posts.reduce((s, p) => s + (p.attributes?.views || p.views || 0), 0)
 
@@ -25,7 +25,12 @@ export default function PublishedPosts() {
           Loading published posts...
         </div>
       ) : (
-        <PostsTable posts={posts} onDelete={handleDelete} showActions={false} />
+        <PostsTable 
+          posts={posts} 
+          onUnpublish={handleUnpublish} 
+          onDelete={handleDelete} 
+          showActions={true} 
+        />
       )}
     </div>
   )

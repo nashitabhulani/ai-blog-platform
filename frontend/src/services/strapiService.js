@@ -120,13 +120,15 @@ export const getPosts = async (params = {}) => {
   return data
 }
 
-// Fetches published posts — tries postStatus filter, falls back to all posts
+// Fetches published posts — tries postStatus filter
+// We use publicationState: 'preview' to ensure our custom 'published' status 
+// is the source of truth, even if Strapi's internal state is 'draft'.
 export const getPublishedPosts = async (params = {}) => {
-  try {
-    const result = await getPosts({ 'filters[postStatus][$eq]': 'published', ...params })
-    if (result.data?.length > 0) return result
-  } catch { /* fall through */ }
-  return getPosts(params)
+  return getPosts({ 
+    'filters[postStatus][$eq]': 'published', 
+    'publicationState': 'preview',
+    ...params 
+  })
 }
 
 export const getDraftPosts = async () =>
@@ -150,15 +152,24 @@ export const updatePost  = async (id, d) => { const { data } = await api.put(`/p
 export const deletePost  = async (id)    => { const { data } = await api.delete(`/posts/${id}`);             return data }
 
 export const publishPost = async (id) => {
+  const now = new Date().toISOString()
   const { data } = await api.put(`/posts/${id}`, {
-    data: { postStatus: 'published', publishedat: new Date().toISOString(), publishedAt: new Date().toISOString() },
+    data: { 
+      postStatus: 'published', 
+      publishedat: now, 
+      publishedAt: now 
+    },
   })
   return data
 }
 
 export const unpublishPost = async (id) => {
   const { data } = await api.put(`/posts/${id}`, {
-    data: { postStatus: 'draft', publishedat: null, publishedAt: null },
+    data: { 
+      postStatus: 'draft', 
+      publishedat: null, 
+      publishedAt: null 
+    },
   })
   return data
 }
@@ -248,12 +259,32 @@ const buildPostData = async (aiResult, publish = false) => {
     try {
       const catList = await getCategories()
       const categories = catList.data || catList
-      const match = categories.find(c => {
+      let match = categories.find(c => {
         const name = getAttr(c, 'name') || c.name || ''
         return name.toLowerCase() === catName.toLowerCase()
       })
+
+      // NEW: Auto-create category if missing
+      if (!match) {
+        console.log(`Category "${catName}" not found. Creating it...`)
+        const newCat = await createCategory({ name: catName, slug: generateSlug(catName) })
+        match = newCat.data || newCat
+      }
+
       if (match) payload.category = match.id
-    } catch (err) { console.warn('Category link failed:', err) }
+    } catch (err) { console.warn('Category link or creation failed:', err) }
+  } else {
+    // Ensure every post has a category (Fall back to General if none provided)
+    try {
+      const catList = await getCategories()
+      const categories = catList.data || catList
+      let general = categories.find(c => (getAttr(c, 'name') || c.name || '').toLowerCase() === 'general')
+      if (!general) {
+        const newCat = await createCategory({ name: 'General', slug: 'general' })
+        general = newCat.data || newCat
+      }
+      payload.category = general.id
+    } catch (err) { console.warn('General category fallback failed:', err) }
   }
 
   // Handle Gemini Base64 Images or Dynamic URLs

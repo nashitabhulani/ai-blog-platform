@@ -90,53 +90,54 @@ export function useAIGenerator() {
       const sectionCount = outline.sections?.length || 0
       updateStep(2, 'done', `Outlined ${sectionCount} core sections & FAQ`)
 
-      const sections = []
-      for (let i = 0; i < outline.sections.length; i++) {
-        const section = outline.sections[i]
-        setCurrentSection(i)
-        updateStep(3, 'active', `Writing "${section.heading}" (${i + 1}/${sectionCount})...`)
-        const text = await writeSection(section.heading, section.subsections, keywords, tone, { title, category })
-        sections.push(text)
-      }
-
+      // 3. Parallelized Section Writing
+      updateStep(3, 'active', `Writing ${sectionCount} sections in parallel...`)
+      const sectionPromises = outline.sections.map((section, idx) => 
+        writeSection(section.heading, section.subsections, keywords, tone, { title, category })
+      )
+      
+      // Also potentially writing FAQ in parallel
       if (outline.faq?.length > 0) {
-        updateStep(3, 'active', 'Writing FAQ section...')
-        const faqText = await writeSection('Frequently Asked Questions', outline.faq, keywords, tone, { title })
-        sections.push(faqText)
+        sectionPromises.push(writeSection('Frequently Asked Questions', outline.faq, keywords, tone, { title }))
       }
 
-      setCurrentSection(-1)
+      const sections = await Promise.all(sectionPromises)
       let fullContent = sections.join('\n\n')
       updateStep(3, 'done', `${sections.length} sections written`)
 
-      updateStep(4, 'active', 'Scanning existing posts for links...')
-      let existingPostsList = []
-      try {
-        const resp = await getPublishedPosts({ 'pagination[limit]': 20 })
-        existingPostsList = resp.data || []
-      } catch { /* offline */ }
-      fullContent = await addInternalLinks(fullContent, existingPostsList)
+      // 4. Parallelize Internal Linking, SEO, and Social
+      updateStep(4, 'active', 'Scanning posts and generating metadata...')
+      
+      const [linkedContent, seo, social] = await Promise.all([
+        // Internal Linking
+        (async () => {
+          try {
+            const resp = await getPublishedPosts({ 'pagination[limit]': 20 })
+            return await addInternalLinks(fullContent, resp.data || [])
+          } catch { return fullContent }
+        })(),
+        // SEO Generation
+        generateSEO(title, fullContent, keywords),
+        // Social Content Generation
+        generateSocialContent(title, (keywords.primaryKeyword || title), keywords) // simplified excerpt if needed
+      ])
+
       updateStep(4, 'done', 'Internal links inserted')
-
-      updateStep(5, 'active', 'Generating SEO metadata...')
-      const seo = await generateSEO(title, fullContent, keywords)
       updateStep(5, 'done', 'SEO metadata complete')
-
-      const socialContent = await generateSocialContent(title, seo.excerpt, keywords)
 
       const finalPost = {
         title,
-        content:          fullContent,
+        content:          linkedContent,
         outline,
         keywords,
         seoTitle:         seo.seoTitle,
         seoDescription:   seo.seoDescription,
         seoKeywords:      keywords.secondaryKeywords,
         excerpt:          seo.excerpt,
-        readingTime:      seo.readingTime || Math.ceil(fullContent.split(' ').length / 200),
+        readingTime:      seo.readingTime || Math.ceil(linkedContent.split(' ').length / 200),
         tags:             seo.tags || [],
         schemaMarkup:     seo.schemaMarkup,
-        socialContent,
+        socialContent:    social,
         category,
         wordCount,
         tone,

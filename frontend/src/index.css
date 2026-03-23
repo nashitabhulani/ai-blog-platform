@@ -3,16 +3,58 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-bg-50: #f8f9fa;
+    --color-bg-100: #ffffff;
+    --color-bg-200: #f1f3f5;
+    --color-bg-300: #e9ecef;
+    --color-bg-400: #dee2e6;
+    --color-bg-500: #ced4da;
+    
+    --tw-white: #0f172a;
+    --tw-gray-100: #1e293b;
+    --tw-gray-200: #334155;
+    --tw-gray-300: #475569;
+    --tw-gray-400: #64748b;
+    --tw-gray-600: #94a3b8;
+    
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-border: #e2e8f0;
+  }
+
+  .dark {
+    --color-bg-50: #0a0a0f;
+    --color-bg-100: #111118;
+    --color-bg-200: #1a1a24;
+    --color-bg-300: #22222e;
+    --color-bg-400: #2a2a38;
+    --color-bg-500: #3a3a4e;
+
+    --tw-white: #ffffff;
+    --tw-gray-100: #f3f4f6;
+    --tw-gray-200: #e5e7eb;
+    --tw-gray-300: #d1d5db;
+    --tw-gray-400: #9ca3af;
+    --tw-gray-600: #4b5563;
+
+    --color-text-primary: #f8f9fa;
+    --color-text-secondary: #94a3b8;
+    --color-border: #2a2a38;
+  }
+
   * {
+    @apply border-[var(--color-border)];
     box-sizing: border-box;
   }
 
   html {
     scroll-behavior: smooth;
+    @apply bg-[var(--color-bg-50)] text-[var(--color-text-primary)];
   }
 
   body {
-    @apply bg-dark-50 text-gray-100 font-sans;
+    @apply bg-dark-50 text-[var(--color-text-primary)] font-sans transition-colors duration-300;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -72,8 +114,16 @@
     @apply border-dark-400 my-8;
   }
 
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-all duration-200 hover:-translate-y-1 hover:border-dark-500;
+  /* Force real white for specific elements in light mode */
+  .bg-purple-600 .text-white, 
+  .bg-purple-500 .text-white,
+  .bg-emerald-600 .text-white,
+  .bg-emerald-500 .text-white,
+  .bg-blue-600 .text-white,
+  .bg-red-600 .text-white,
+  button[class*="bg-purple"] .text-white,
+  button[class*="bg-emerald"] .text-white,
+  .text-real-white {
+    color: #ffffff !important;
   }
 }

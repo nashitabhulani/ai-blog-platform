@@ -7,6 +7,8 @@ import OutlineViewer from '../components/OutlineViewer'
 import SEOPreview from '../components/SEOPreview'
 import SocialPreview from '../components/SocialPreview'
 import TableOfContents from '../components/TableOfContents'
+import { getCategories } from '../services/strapiService'
+
 
 const TONES        = ['Professional', 'Casual', 'Technical', 'Educational', 'Conversational', 'Authoritative']
 const WORD_COUNTS  = ['800–1200 words', '1500–2000 words', '2500–3000 words', '3500+ words']
@@ -26,6 +28,8 @@ export default function AIGenerator() {
   const [wpUsername, setWpUsername]     = useState('')
   const [wpPassword, setWpPassword]     = useState('')
   const [savedWpConfig, setSavedWpConfig] = useState(null)
+  const [categoriesList, setCategoriesList] = useState(['AI & Technology', 'Development', 'Science', 'Business', 'Healthcare', 'Design'])
+
 
   useEffect(() => {
     const saved = localStorage.getItem('wp_config')
@@ -36,6 +40,20 @@ export default function AIGenerator() {
       setWpUsername(parsed.username)
       setWpPassword(parsed.appPassword)
     }
+  }, [])
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const res = await getCategories()
+        const data = res.data || res
+        if (data.length > 3) {
+          const names = data.map(c => c.name || c.attributes?.name)
+          setCategoriesList(names)
+        }
+      } catch { /* use defaults */ }
+    }
+    fetchCats()
   }, [])
 
   const {
@@ -170,7 +188,7 @@ export default function AIGenerator() {
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full bg-dark-200 border border-dark-400 focus:border-purple-500 rounded-lg px-3 py-2 text-sm text-white outline-none transition-colors"
               >
-                {['AI & Technology', 'Development', 'Science', 'Business', 'Healthcare', 'Design'].map((c) => (
+                {categoriesList.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
