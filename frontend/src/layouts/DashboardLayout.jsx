@@ -77,14 +77,14 @@ export default function DashboardLayout() {
         <div className="p-2 border-t border-dark-400 space-y-2">
           <ThemeToggle />
           <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-dark-200 group relative">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-semibold text-white shrink-0">
-              AC
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-lg shadow-purple-500/20">
+              {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">Alex Chen</p>
+              <p className="text-xs font-semibold text-white truncate capitalize tracking-tight">{displayName}</p>
               <button 
                 onClick={logout}
-                className="text-[9px] text-red-400 hover:text-red-300 font-bold uppercase tracking-tighter transition-colors"
+                className="text-[9px] text-red-500/80 hover:text-red-400 font-black uppercase tracking-widest transition-colors flex items-center gap-1"
               >
                 Sign Out
               </button>

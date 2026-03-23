@@ -97,30 +97,44 @@ async function chatWithRetry(messages, options = {}, maxRetries = 2) {
 // ─── Safe JSON parse ──────────────────────────────────────────────────────────
 
 function parseJSON(text) {
-  // Clear any markdown wrappers
-  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+  if (!text) return null
+
+  // 1. Extract JSON if wrapped in text or markdown
+  let cleaned = text.trim()
+  const match = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
+  if (match) cleaned = match[0]
+
+  // Clean explicit markdown wrappers if they survived the match
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
 
   const attemptParse = (str) => {
-    try { return JSON.parse(str) } catch (e) { return null }
+    try {
+      return JSON.parse(str)
+    } catch (e) {
+      return null
+    }
   }
 
-  // 1. Direct parse
+  // A. Direct parse attempt
   let res = attemptParse(cleaned)
   if (res) return res
 
-  // 2. Heavy Healer: Fix unescaped quotes AND missing commas
-  // This re-injects commas before properties like "seoTitle" that the AI often forgets
+  // B. Healer: Fix common AI JSON errors
   let healed = cleaned
-    .replace(/(?<![:[,])\s*"(?![}\],:])/g, '\\"') // Escape non-structural quotes
-    .replace(/"\s*\n\s*"/g, '",\n"')               // Re-capture missing property commas
-    .replace(/,\s*,/g, ',')                       // Strip double commas
-    .replace(/,\s*}/g, '}')                       // Strip trailing comma in object
-    .replace(/,\s*]/g, ']')                       // Strip trailing comma in array
+    // Fix literal newlines inside strings (must be escaped for JSON.parse)
+    .replace(/(?<=[:\s,])"(.*)"(?=[\s,}\]])/gs, (m, p1) => `"${p1.replace(/\n/g, '\\n').replace(/\r/g, '\\r')}"`)
+    // Remove trailing commas
+    .replace(/,\s*([}\]])/g, '$1')
+    // Attempt to fix unescaped double quotes inside strings
+    // This is tricky: we target quotes not preceded by : or [ and not followed by , or }
+    .replace(/(?<![:[,])\s*"(?![}\],:])/g, '\\"')
+    // Clean up double escapes that might have been created
+    .replace(/\\+"/g, '\\"')
 
   res = attemptParse(healed)
   if (res) return res
 
-  // 3. Truncation repair (stack based)
+  // C. Truncation repair (balance brackets)
   let lastResort = healed
   let stack = []
   let inString = false
@@ -134,14 +148,15 @@ function parseJSON(text) {
     else if (char === '}' || char === ']') stack.pop()
   }
 
-  if (inString) lastResort += '"' // Close dangling string
-  while (stack.length > 0) lastResort += stack.pop() // Close brackets
+  if (inString) lastResort += '"'
+  while (stack.length > 0) lastResort += stack.pop()
 
   res = attemptParse(lastResort)
   if (res) return res
 
-  console.warn('JSON parse failed. Raw text:', text)
-  throw new Error('AI returned malformed JSON. Please try again with smaller batches.')
+  console.warn('JSON parse failed. Final processed text:', lastResort)
+  console.warn('Original raw text:', text)
+  throw new Error('AI returned malformed data structure. Please try a smaller topic or retry.')
 }
 
 // ─── Step 1: Keyword Research ─────────────────────────────────────────────────

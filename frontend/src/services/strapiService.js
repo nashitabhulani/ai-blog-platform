@@ -6,9 +6,6 @@ const STRAPI_TOKEN = import.meta.env.VITE_STRAPI_TOKEN || ''
 
 const api = axios.create({
   baseURL: `${STRAPI_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Request interceptor to add token
@@ -222,10 +219,34 @@ export const createPromptTemplate = async (d) => { const { data } = await api.po
 export const uploadFile = async (file) => {
   const formData = new FormData()
   formData.append('files', file)
-  const { data } = await axios.post(`${STRAPI_URL}/api/upload`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data', ...(STRAPI_TOKEN && { Authorization: `Bearer ${STRAPI_TOKEN}` }) },
-  })
-  return data
+  
+  const token = localStorage.getItem('token')
+  console.log('🔄 Uploading Image [Debug Logs] ───')
+  console.log('Using JWT Token:', token ? 'Yes' : 'No (Fallback to static token)')
+
+  try {
+    // Attempt with current user token
+    const { data } = await api.post('/upload', formData)
+    return data
+  } catch (err) {
+    if (err.response?.status === 403) {
+      console.warn('⚠️ 403 Forbidden with user JWT. Trying fallback with Master API Token...')
+      // Full Fallback using the static STRAPI_TOKEN if it exists
+      if (STRAPI_TOKEN) {
+        try {
+          // Use a direct axios call to avoid the interceptor loop
+          const res = await axios.post(`${STRAPI_URL}/api/upload`, formData, {
+            headers: { 'Authorization': `Bearer ${STRAPI_TOKEN}` }
+          })
+          console.log('✅ Fallback Upload Success!')
+          return res.data
+        } catch (fbErr) {
+          console.error('❌ Master API Token also failed or missing.', fbErr)
+        }
+      }
+    }
+    throw err
+  }
 }
 
 // Upload base64 (from Gemini) to Strapi
