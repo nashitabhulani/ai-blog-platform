@@ -2,28 +2,29 @@ import { useState } from 'react'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const navigate = useNavigate()
-  const { user, login } = useAuth()
-  const [identifier, setIdentifier] = useState('')
+  const { user, register } = useAuth()
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
 
   if (user) return <Navigate to="/dashboard" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoggingIn(true)
+    setIsRegistering(true)
     setError('')
     
-    const result = await login(identifier, password)
+    const result = await register(username, email, password)
     
     if (result.success) {
       navigate('/dashboard')
     } else {
       setError(result.error)
-      setIsLoggingIn(false)
+      setIsRegistering(false)
     }
   }
 
@@ -35,10 +36,10 @@ export default function LoginPage() {
             A
           </div>
           <h2 className="mt-6 text-center text-3xl font-serif text-white tracking-tight">
-            Aether AI Dashboard
+            Join the AI Factory
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            Secure admin portal for AI content manufacturing.
+            Create an ID to start generating professional content.
           </p>
         </div>
 
@@ -48,14 +49,26 @@ export default function LoginPage() {
             
             <div className="space-y-5 relative">
               <div className="space-y-2">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Email or Username</label>
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Username</label>
                 <input
                   type="text"
                   required
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-white focus:border-purple-500 outline-none transition-all"
-                  placeholder="admin@aether.ai"
+                  placeholder="alex_creator"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-white focus:border-purple-500 outline-none transition-all"
+                  placeholder="alex@example.com"
                 />
               </div>
 
@@ -79,24 +92,20 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoggingIn}
+                disabled={isRegistering}
                 className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-2xl transition-all shadow-lg shadow-purple-600/20 uppercase tracking-widest active:scale-[0.98] disabled:opacity-50"
               >
-                {isLoggingIn ? 'Verifying Credentials...' : 'Sign In'}
+                {isRegistering ? 'Generating Account...' : 'Create Account'}
               </button>
             </div>
           </div>
         </form>
 
         <p className="mt-8 text-center text-sm text-gray-400 font-medium">
-          Don't have an ID yet?{' '}
-          <Link to="/signup" className="text-purple-400 hover:text-purple-300 underline decoration-purple-500/30">
-            Create Account
+          Already have an account?{' '}
+          <Link to="/login" className="text-purple-400 hover:text-purple-300 underline decoration-purple-500/30">
+            Sign In
           </Link>
-        </p>
-
-        <p className="mt-10 text-center text-[10px] text-gray-600 uppercase tracking-widest font-bold">
-          Only registered AI Factory operators can access.
         </p>
       </div>
     </div>

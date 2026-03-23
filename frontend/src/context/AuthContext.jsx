@@ -33,6 +33,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const register = async (username, email, password) => {
+    const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337'
+    try {
+      const { data } = await axios.post(`${STRAPI_URL}/api/auth/local/register`, {
+        username,
+        email,
+        password,
+      })
+      
+      localStorage.setItem('token', data.jwt)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setUser(data.user)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.response?.data?.error?.message || 'Registration failed' }
+    }
+  }
+
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -40,7 +58,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

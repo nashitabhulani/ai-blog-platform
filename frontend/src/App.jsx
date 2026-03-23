@@ -5,6 +5,7 @@ import DashboardLayout from './layouts/DashboardLayout'
 import BlogLayout from './layouts/BlogLayout'
 
 import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
 import Dashboard from './pages/Dashboard'
 import AIGenerator from './pages/AIGenerator'
 import DraftPosts from './pages/DraftPosts'
@@ -21,6 +22,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
 
           {/* Admin / Dashboard - Protected */}
           <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
