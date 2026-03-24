@@ -126,9 +126,9 @@ function parseJSON(text) {
     // Remove trailing commas
     .replace(/,\s*([}\]])/g, '$1')
     // Attempt to fix unescaped double quotes inside strings
-    // This is tricky: we target quotes not preceded by : or [ and not followed by , or }
-    .replace(/(?<![:[,])\s*"(?![}\],:])/g, '\\"')
-    // Clean up double escapes that might have been created
+    // MODIFIED: Added { to lookbehind to avoid escaping key quotes
+    .replace(/([^:[,\{\s])\s*"(?![}\],:])/g, '$1\\"')
+    // Clean up triple or more escapes
     .replace(/\\+"/g, '\\"')
 
   res = attemptParse(healed)
