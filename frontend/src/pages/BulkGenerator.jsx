@@ -16,7 +16,22 @@ export default function BulkGenerator() {
   const [completed, setCompleted] = useState(0)
   const [batchLogs, setBatchLogs] = useState([])
   const [recentPosts, setRecentPosts] = useState([])
-  const [selectedTopics, setSelectedTopics] = useState([])
+  const [selectedTopics, setSelectedTopics]     = useState([])
+  const [showManual, setShowManual]               = useState(false)
+  const [manualTopics, setManualTopics]           = useState('')
+
+  const handleManualLoad = () => {
+    const list = manualTopics
+      .split('\n')
+      .map(t => t.trim())
+      .filter(t => t.length > 3)
+    
+    if (list.length > 0) {
+      setTopics(list)
+      setSelectedTopics(list)
+      addLog(`📥 Loaded ${list.length} manual topics into queue.`)
+    }
+  }
 
   const fetchTopics = async () => {
     setIsDiscovering(true)
@@ -122,44 +137,85 @@ export default function BulkGenerator() {
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* Settings Panel */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-dark-100 border border-dark-400 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 blur-3xl rounded-full -mr-16 -mt-16" />
-            <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+    <div className="lg:col-span-4 space-y-6">
+      <div className="bg-dark-100 border border-dark-400 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 blur-3xl rounded-full -mr-16 -mt-16" />
+        <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] flex items-center gap-2">
                 <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
                 Factory Configuration
             </h3>
-            
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Market Niche</label>
-                <input 
-                  type="text" 
-                  value={niche} 
-                  onChange={e => setNiche(e.target.value)}
-                  className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-white focus:border-purple-500 outline-none transition-all shadow-inner"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Batch Size (1–400)</label>
-                <input 
-                  type="number" 
-                  value={count} 
-                  onChange={e => setCount(e.target.value)}
-                  className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-emerald-400 font-mono focus:border-purple-500 outline-none transition-all shadow-inner"
-                />
-              </div>
-
-              <button 
-                  onClick={fetchTopics}
-                  disabled={isDiscovering || isGenerating}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-2xl transition-all shadow-lg shadow-purple-500/20 uppercase tracking-widest active:scale-[0.98]"
-              >
-                  {isDiscovering ? 'Analyzing SEO Landscape…' : '🔍 Discover Trending Topics'}
-              </button>
+            <div className="flex gap-1 bg-dark-200 p-0.5 rounded-lg border border-dark-400">
+                <button 
+                  onClick={() => setShowManual(false)} 
+                  className={`px-2 py-1 text-[9px] font-bold rounded-md transition-all ${!showManual ? 'bg-purple-600 text-white' : 'text-gray-500'}`}
+                >
+                  AI
+                </button>
+                <button 
+                  onClick={() => setShowManual(true)} 
+                  className={`px-2 py-1 text-[9px] font-bold rounded-md transition-all ${showManual ? 'bg-purple-600 text-white' : 'text-gray-500'}`}
+                >
+                  List
+                </button>
             </div>
+        </div>
+        
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Market Niche</label>
+            <input 
+              type="text" 
+              value={niche} 
+              onChange={e => setNiche(e.target.value)}
+              className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-white focus:border-purple-500 outline-none transition-all shadow-inner"
+            />
           </div>
+
+          {!showManual ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Batch Size (1–400)</label>
+                  <input 
+                    type="number" 
+                    value={count} 
+                    onChange={e => setCount(e.target.value)}
+                    className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-emerald-400 font-mono focus:border-purple-500 outline-none transition-all shadow-inner"
+                  />
+                </div>
+
+                <button 
+                    onClick={fetchTopics}
+                    disabled={isDiscovering || isGenerating}
+                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-2xl transition-all shadow-lg shadow-purple-500/20 uppercase tracking-widest active:scale-[0.98]"
+                >
+                    {isDiscovering ? 'Analyzing SEO Landscape…' : '🔍 Discover Trending Topics'}
+                </button>
+              </>
+          ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Paste Topics (One per line)</label>
+                  <textarea 
+                    rows={5}
+                    value={manualTopics}
+                    onChange={e => setManualTopics(e.target.value)}
+                    placeholder="Topic 1\nTopic 2\nTopic 3..."
+                    className="w-full bg-dark-200 border border-dark-400 rounded-2xl px-5 py-3 text-sm text-white focus:border-purple-500 outline-none transition-all shadow-inner resize-none font-mono placeholder:text-gray-700"
+                  />
+                </div>
+
+                <button 
+                    onClick={handleManualLoad}
+                    disabled={isGenerating || !manualTopics.trim()}
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-widest active:scale-[0.98]"
+                >
+                    🚀 Load into Factory Queue
+                </button>
+              </>
+          )}
+        </div>
+      </div>
 
           {/* Real-time Meter */}
           <div className="bg-dark-100 border border-dark-400 p-8 rounded-3xl">

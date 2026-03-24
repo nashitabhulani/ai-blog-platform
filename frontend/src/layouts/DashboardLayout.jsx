@@ -28,7 +28,9 @@ const navItems = [
 ]
 
 export default function DashboardLayout() {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
+  const displayName = user?.username || 'User'
+  const userInitial = displayName.charAt(0).toUpperCase()
   return (
     <div className="flex h-screen bg-dark-50 overflow-hidden">
       {/* Sidebar */}

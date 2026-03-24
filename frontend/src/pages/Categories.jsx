@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getCategories, createCategory } from '../services/strapiService'
+import { getCategories, createCategory, deleteCategory } from '../services/strapiService'
 import PageHeader from '../components/PageHeader'
 import { slugify } from '../utils/helpers'
 
@@ -135,8 +135,14 @@ export default function Categories() {
             return (
               <div
                 key={cat.id}
-                className="bg-dark-100 border border-dark-400 hover:border-dark-500 rounded-xl p-4 text-center cursor-pointer transition-all hover:-translate-y-0.5"
+                className="bg-dark-100 border border-dark-400 hover:border-dark-500 rounded-xl p-4 text-center cursor-pointer transition-all hover:-translate-y-0.5 relative group"
               >
+                <button
+                  onClick={(e) => handleDelete(cat.id, e)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white flex items-center justify-center text-[10px]"
+                >
+                  ✕
+                </button>
                 <div className="text-2xl mb-2">
                   {CATEGORY_ICONS[attrs.name] || '📁'}
                 </div>
