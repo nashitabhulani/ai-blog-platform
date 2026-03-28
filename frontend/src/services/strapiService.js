@@ -8,12 +8,11 @@ const api = axios.create({
   baseURL: `${STRAPI_URL}/api`,
 })
 
-// Request interceptor to add token
+// Request interceptor to add static token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || STRAPI_TOKEN
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (STRAPI_TOKEN) {
+      config.headers.Authorization = `Bearer ${STRAPI_TOKEN}`
     }
     return config
   },
@@ -220,31 +219,16 @@ export const uploadFile = async (file) => {
   const formData = new FormData()
   formData.append('files', file)
   
-  const token = localStorage.getItem('token')
-  console.log('🔄 Uploading Image [Debug Logs] ───')
-  console.log('Using JWT Token:', token ? 'Yes' : 'No (Fallback to static token)')
+  if (!STRAPI_TOKEN) {
+    console.error('❌ STRAPI_TOKEN is missing in environment variables.')
+    throw new Error('Strapi API Token missing')
+  }
 
   try {
-    // Attempt with current user token
     const { data } = await api.post('/upload', formData)
     return data
   } catch (err) {
-    if (err.response?.status === 403) {
-      console.warn('⚠️ 403 Forbidden with user JWT. Trying fallback with Master API Token...')
-      // Full Fallback using the static STRAPI_TOKEN if it exists
-      if (STRAPI_TOKEN) {
-        try {
-          // Use a direct axios call to avoid the interceptor loop
-          const res = await axios.post(`${STRAPI_URL}/api/upload`, formData, {
-            headers: { 'Authorization': `Bearer ${STRAPI_TOKEN}` }
-          })
-          console.log('✅ Fallback Upload Success!')
-          return res.data
-        } catch (fbErr) {
-          console.error('❌ Master API Token also failed or missing.', fbErr)
-        }
-      }
-    }
+    console.error('❌ Upload failed with STRAPI_TOKEN:', err)
     throw err
   }
 }

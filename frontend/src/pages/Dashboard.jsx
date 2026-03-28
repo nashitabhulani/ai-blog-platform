@@ -7,15 +7,12 @@ import PostsTable from '../components/PostsTable'
 import WordPressDashboard from '../components/WordPressDashboard'
 import { getAttr } from '../utils/helpers'
 
-import { useAuth } from '../context/AuthContext'
-
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
   const { posts, loading, handlePublish, handleUnpublish, handleDelete } = usePosts('all')
 
-  const userName = user?.username || user?.email?.split('@')[0] || 'Commander'
+  const userName = 'Commander'
 
   const published = posts.filter((p) => getAttr(p, 'postStatus') === 'published')
   const drafts    = posts.filter((p) => getAttr(p, 'postStatus') === 'draft')
